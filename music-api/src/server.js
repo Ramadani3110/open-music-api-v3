@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 /* eslint-disable no-console */
 /* eslint-disable no-unused-vars */
 require("dotenv").config();
@@ -35,6 +36,11 @@ const PlaylistValidator = require("./validator/music/playlist");
 const collaborations = require("./api/collaborations");
 const CollaborationsService = require("./service/postgres/CollaborationsService");
 const CollaborationValidator = require("./validator/music/collaborations");
+
+// exports
+const _exports = require("./api/exports");
+const ProducerService = require("./service/rabbitmq/ProducerService");
+const ExportsValidator = require("./validator/music/exports");
 
 const init = async () => {
   const collaborationsService = new CollaborationsService();
@@ -119,6 +125,14 @@ const init = async () => {
         collaborationsService,
         playlistService,
         validator: CollaborationValidator,
+      },
+    },
+    {
+      plugin: _exports,
+      options: {
+        exportsService: ProducerService,
+        playlistService,
+        validator: ExportsValidator,
       },
     },
   ]);
