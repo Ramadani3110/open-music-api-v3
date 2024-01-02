@@ -1,3 +1,4 @@
+/* eslint-disable comma-dangle */
 /* eslint-disable no-else-return */
 /* eslint-disable no-console */
 /* eslint-disable class-methods-use-this */
@@ -6,15 +7,15 @@
 /* eslint-disable no-unused-vars */
 const autoBind = require("auto-bind");
 const ClientError = require("../../exceptions/ClientError");
-const NotFoundError = require("../../exceptions/NotFoundError");
 
 class AlbumsHandler {
-  constructor(service, validator) {
+  constructor(service, storageService, validator, uploadValidator) {
     this._service = service;
+    this._storageService = storageService;
     this._validator = validator;
+    this._uploadValidator = uploadValidator;
 
     autoBind(this);
-    // this.postAlbumsHandler = this.postAlbumsHandler.bind(this);
   }
 
   async postAlbumsHandler(request, h) {
@@ -131,6 +132,158 @@ class AlbumsHandler {
         message: "Maaf terjadi kesalahan di server kami",
       });
       response.code(500);
+      return response;
+    }
+  }
+
+  async postAlbumsCoversHandler(request, h) {
+    try {
+      const { id } = request.params;
+      const { cover } = request.payload;
+      const contentLength = request.headers["content-length"];
+
+      this._uploadValidator.validateImageHeaders(cover.hapi.headers);
+
+      const filename = await this._storageService.writeFile(
+        cover,
+        cover.hapi,
+        contentLength
+      );
+
+      const coverUrl = `http://${process.env.HOST}:${process.env.PORT}/upload/images/${filename}`;
+
+      await this._service.editAlbumsCover(id, coverUrl);
+
+      const response = h.response({
+        status: "success",
+        message: "Sampul berhasil diunggah",
+      });
+      response.code(201);
+      return response;
+    } catch (error) {
+      if (error instanceof ClientError) {
+        const response = h.response({
+          status: "fail",
+          message: error.message,
+        });
+        response.code(error.statusCode);
+        return response;
+      }
+      const response = h.response({
+        status: "error",
+        message: "Maaf terjadi kesalahan di server kami",
+      });
+      response.code(500);
+      console.error(error);
+      return response;
+    }
+  }
+
+  async postLikesHandler(request, h) {
+    try {
+      const { id } = request.params;
+      const { id: credentialsId } = request.auth.credentials;
+      await this._service.checkLikes(id, credentialsId);
+      await this._service.addLikes(id, credentialsId);
+
+      const response = h.response({
+        status: "success",
+        message: "Berhasil like albums",
+      });
+      response.code(201);
+      return response;
+    } catch (error) {
+      if (error instanceof ClientError) {
+        const response = h.response({
+          status: "fail",
+          message: error.message,
+        });
+        response.code(error.statusCode);
+        return response;
+      }
+      const response = h.response({
+        status: "error",
+        message: "Maaf terjadi kesalahan di server kami",
+      });
+      response.code(500);
+      console.error(error);
+      return response;
+    }
+  }
+
+  async deleteLikesHandler(request, h) {
+    try {
+      const { id } = request.params;
+      const { id: credentialsId } = request.auth.credentials;
+      await this._service.deleteLikes(id, credentialsId);
+
+      return {
+        status: "success",
+        message: "Berhasil unlike albums",
+      };
+    } catch (error) {
+      if (error instanceof ClientError) {
+        const response = h.response({
+          status: "fail",
+          message: error.message,
+        });
+        response.code(error.statusCode);
+        return response;
+      }
+      const response = h.response({
+        status: "error",
+        message: "Maaf terjadi kesalahan di server kami",
+      });
+      response.code(500);
+      console.error(error);
+      return response;
+    }
+  }
+
+  async getLikesHandler(request, h) {
+    try {
+      const { id } = request.params;
+      const { likes, isCache } = await this._service.getLikes(id);
+      console.log();
+      console.log(isCache);
+      console.log();
+      if (isCache) {
+        const response = h.response({
+          status: "success",
+          message: "Berhasil",
+          data: {
+            likes,
+          },
+        });
+        response.code(200);
+        response.header("X-Data-Source", "cache");
+        return response;
+      }
+
+      const response = h.response({
+        status: "success",
+        message: "Berhasil",
+        data: {
+          likes,
+        },
+      });
+      response.code(200);
+      return response;
+    } catch (error) {
+      if (error instanceof ClientError) {
+        const response = h.response({
+          status: "fail",
+          message: error.message,
+        });
+        response.code(error.statusCode);
+        return response;
+      }
+      const response = h.response({
+        status: "error",
+        message: "Maaf terjadi kesalahan di server kami",
+      });
+      response.code(500);
+      console.error(error);
       return response;
     }
   }

@@ -1,3 +1,5 @@
+/* eslint-disable import/no-extraneous-dependencies */
+/* eslint-disable comma-dangle */
 /* eslint-disable no-underscore-dangle */
 /* eslint-disable no-console */
 /* eslint-disable no-unused-vars */
@@ -5,6 +7,8 @@ require("dotenv").config();
 // hapi
 const Hapi = require("@hapi/hapi");
 const Jwt = require("@hapi/jwt");
+const Inert = require("@hapi/inert");
+const path = require("path");
 
 // albums
 const albums = require("./api/albums");
@@ -42,9 +46,20 @@ const _exports = require("./api/exports");
 const ProducerService = require("./service/rabbitmq/ProducerService");
 const ExportsValidator = require("./validator/music/exports");
 
+// storage
+const StorageService = require("./service/storage/StorageService");
+const UploadValidator = require("./validator/music/uploads");
+
+// cache
+const CacheService = require("./service/redis/CacheService");
+
 const init = async () => {
   const collaborationsService = new CollaborationsService();
-  const albumsService = new AlbumsService();
+  const storageService = new StorageService(
+    path.resolve(__dirname, "api/upload/images")
+  );
+  const cacheService = new CacheService();
+  const albumsService = new AlbumsService(cacheService);
   const songsService = new SongsService();
   const usersService = new UsersService();
   const authenticationsService = new AuthenticationsService();
@@ -62,6 +77,9 @@ const init = async () => {
   await server.register([
     {
       plugin: Jwt,
+    },
+    {
+      plugin: Inert,
     },
   ]);
 
@@ -86,7 +104,9 @@ const init = async () => {
       plugin: albums,
       options: {
         service: albumsService,
+        storageService,
         validator: AlbumsValidator,
+        uploadValidator: UploadValidator,
       },
     },
     {
