@@ -139,9 +139,6 @@ class AlbumsService {
     try {
       const count = await this._cacheService.get(`likes:${albumId}`);
       const likes = parseInt(count);
-      console.log("LIKES");
-      console.log(likes);
-      console.log("LIKES");
       const isCache = true;
       return { likes, isCache };
     } catch (error) {
