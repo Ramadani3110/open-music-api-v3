@@ -244,9 +244,6 @@ class AlbumsHandler {
     try {
       const { id } = request.params;
       const { likes, isCache } = await this._service.getLikes(id);
-      console.log();
-      console.log(isCache);
-      console.log();
       if (isCache) {
         const response = h.response({
           status: "success",

@@ -1,3 +1,8 @@
+/* eslint-disable camelcase */
+/* eslint-disable no-unused-vars */
+/* eslint-disable no-console */
+/* eslint-disable no-underscore-dangle */
+/* eslint-disable comma-dangle */
 class Listener {
   constructor(playlistService, mailSender) {
     this._playlistService = playlistService;

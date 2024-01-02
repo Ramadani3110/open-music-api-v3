@@ -1,3 +1,4 @@
+/* eslint-disable no-underscore-dangle */
 const nodemailer = require("nodemailer");
 
 class MailSender {

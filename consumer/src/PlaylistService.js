@@ -1,3 +1,5 @@
+/* eslint-disable camelcase */
+/* eslint-disable no-underscore-dangle */
 const { Pool } = require("pg");
 
 class PlaylistService {
